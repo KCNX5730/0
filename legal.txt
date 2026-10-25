@@ -1,0 +1,21 @@
+Legal and Attribution Notice for SUBWIN11
+
+This project is a fan-made, educational, and non-commercial recreation of a desktop operating system interface. It is designed to demonstrate web development skills (HTML, CSS, JavaScript) and is not intended to infringe on any copyrights or trademarks.
+
+1. Trademarks and Copyrights
+"Windows", "Windows 11", and the Windows logo are registered trademarks of Microsoft Corporation. This project is not affiliated with, endorsed by, sponsored by, or approved by Microsoft. No original Microsoft source code, proprietary software, or internal system files were used in the creation of this interface. The layout, functionality, and general "look and feel" are recreated from scratch based on publicly available visual references.
+
+2. Image and Icon Assets
+The icons used in this project (such as the folder icons, app icons, and system tray icons) are provided by Icons8. They are used in accordance with the Icons8 Free License, which permits use in personal and educational projects provided that a link back to Icons8 (https://icons8.com) is included. The "Start" button logo and certain app icons are used as placeholders for educational mockup purposes only. If you intend to use this project commercially, you must replace these with your own original designs or purchase the appropriate commercial licenses.
+
+3. Wallpaper and Audio
+The desktop wallpaper currently used in this project is a placeholder. The original "Bloom" wallpaper is a copyrighted work created by Microsoft and the design studio Six N. Five. It is used here temporarily for demonstration purposes only and should be replaced with a Creative Commons or royalty-free image before any public distribution. The startup sound is also a placeholder; any audio used in a public project must be properly licensed (e.g., Creative Commons 0 or a royalty-free sound library).
+
+4. Code License
+The HTML, CSS, and JavaScript code written for this project is provided as open-source under the MIT License. You are free to use, modify, and distribute the code for your own projects, provided that you include this original copyright notice. This code is provided "as is" without warranty of any kind.
+
+5. Data and API Use
+This project uses a simulated local database (IndexedDB) to store user preferences, such as window positions and active apps. No personal data is collected, transmitted, or stored on any external server. The search functionality redirects to a standard web browser (Bing) and does not track user input. Any external APIs (such as weather data, if implemented) must be used in accordance with their respective terms of service and rate limits.
+
+6. Disclaimer
+This project is provided for educational and entertainment purposes only. The author is not responsible for any misuse of this code, including but not limited to trademark violations, copyright infringement, or violations of third-party terms of service. By using this code, you agree to take full responsibility for ensuring that your own implementation complies with all applicable laws and regulations in your jurisdiction.
