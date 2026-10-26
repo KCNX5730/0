@@ -4,15 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f3f3f3">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>SUBWIN11 · Windows 11</title>
 
-  <!-- Font Awesome 6 CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
-    /* ================================================================
-       RESET & BASE
-       ================================================================ */
     * {
       margin: 0;
       padding: 0;
@@ -30,18 +29,70 @@
       --accent-glow: rgba(0, 103, 192, 0.35);
       --taskbar-h: 48px;
       --win-radius: 12px;
-      --glass: rgba(243, 243, 243, 0.85); /* Light Taskbar */
+      --glass: rgba(243, 243, 243, 0.85);
       --border-light: rgba(0, 0, 0, 0.1);
       --tray-hover: rgba(0, 0, 0, 0.06);
     }
 
     html, body {
       height: 100%;
+      height: 100dvh;
+      width: 100%;
       overflow: hidden;
       font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: #000;
       touch-action: none;
+      overscroll-behavior: none;
     }
+
+    /* ================================================================
+       CUSTOM POINTER (desktop only)
+       ================================================================ */
+    #custom-cursor {
+      position: fixed;
+      top: 0; left: 0;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      z-index: 2147483647;
+      transform: translate(-50%, -50%);
+      display: none;
+      will-change: transform;
+    }
+    #custom-cursor svg { display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45)); }
+    #custom-cursor.pressed svg { transform: scale(0.8); }
+
+    /* Hide native cursor + show custom pointer on precision pointing devices */
+    @media (pointer: fine) {
+      html, body, * { cursor: none !important; }
+      #custom-cursor { display: block; }
+    }
+
+    /* ================================================================
+       FULLSCREEN HINT
+       ================================================================ */
+    #fs-hint {
+      position: fixed;
+      bottom: calc(var(--taskbar-h) + 16px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.78);
+      color: #fff;
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      padding: 9px 18px;
+      border-radius: 20px;
+      z-index: 10000;
+      pointer-events: none;
+      display: none;
+      opacity: 1;
+      transition: opacity 0.45s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }
+    #fs-hint.hide { opacity: 0; }
+    @media (max-width: 380px) { #fs-hint { font-size: 11px; padding: 7px 14px; } }
 
     /* ================================================================
        LOADING SCREEN
@@ -57,19 +108,13 @@
       justify-content: center;
       transition: opacity 0.7s ease;
     }
-    #loading-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #loading-screen.hidden { opacity: 0; pointer-events: none; }
     .loading-logo {
-      width: 90px;
-      height: auto;
-      margin-bottom: 44px;
+      width: 90px; height: auto; margin-bottom: 44px;
       filter: drop-shadow(0 0 30px rgba(76, 194, 255, 0.25));
     }
     .spinner {
-      width: 30px;
-      height: 30px;
+      width: 30px; height: 30px;
       border: 3px solid rgba(255,255,255,0.12);
       border-top-color: #fff;
       border-radius: 50%;
@@ -78,7 +123,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ================================================================
-       DESKTOP (Light Background)
+       DESKTOP
        ================================================================ */
     .desktop {
       position: fixed;
@@ -91,10 +136,7 @@
       background-repeat: no-repeat;
       transition: filter 0.3s ease;
     }
-
-    .desktop.blurred {
-      filter: blur(6px) brightness(0.9);
-    }
+    .desktop.blurred { filter: blur(6px) brightness(0.9); }
 
     .desktop-surface {
       position: relative;
@@ -104,13 +146,10 @@
       height: 100%;
     }
 
-    /* ================================================================
-       DESKTOP ICONS (Recycle Bin, Edge)
-       ================================================================ */
+    /* Desktop Icons */
     .desktop-icons-container {
       position: absolute;
-      top: 16px;
-      left: 16px;
+      top: 16px; left: 16px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -133,9 +172,7 @@
     .desktop-icon:hover { background: rgba(255,255,255,0.15); }
     .desktop-icon:active { background: rgba(255,255,255,0.3); transform: scale(0.95); }
 
-    /* ================================================================
-       SELECTION HIGHLIGHTER
-       ================================================================ */
+    /* Selection box */
     #selection-box {
       position: absolute;
       border: 1px solid #0078D7;
@@ -146,9 +183,7 @@
       pointer-events: none;
     }
 
-    /* ================================================================
-       CONTEXT MENU
-       ================================================================ */
+    /* Context menu */
     .context-menu {
       position: absolute;
       background: rgba(255, 255, 255, 0.95);
@@ -175,7 +210,7 @@
     .context-item i { width: 16px; text-align: center; font-size: 14px; }
 
     /* ================================================================
-       TASKBAR (White Theme)
+       TASKBAR
        ================================================================ */
     .taskbar {
       position: relative;
@@ -192,7 +227,6 @@
       box-shadow: 0 -2px 12px rgba(0,0,0,0.05);
     }
 
-    /* Weather Widget on Taskbar Left */
     .weather-widget {
       position: absolute;
       left: 12px;
@@ -207,182 +241,97 @@
     }
     .weather-widget:hover { background: var(--tray-hover); }
     .weather-widget img { width: 24px; height: 24px; }
-    .weather-info {
-      display: flex;
-      flex-direction: column;
-      color: #000;
-      line-height: 1.2;
-    }
+    .weather-info { display: flex; flex-direction: column; color: #000; line-height: 1.2; }
     .weather-temp { font-size: 12px; font-weight: 600; }
     .weather-desc { font-size: 11px; opacity: 0.8; }
 
-    .taskbar-center {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      height: 100%;
-    }
+    .taskbar-center { display: flex; align-items: center; gap: 4px; height: 100%; }
 
     .taskbar-icon {
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
       border-radius: 6px;
       cursor: pointer;
       transition: background 0.12s, transform 0.08s;
       position: relative;
       touch-action: manipulation;
     }
-
-    .taskbar-icon img { 
-      width: 24px; 
-      height: 24px; 
-      object-fit: contain; 
-    }
-    
-    /* Start button specific */
-    .taskbar-icon[data-app="start"] img {
-      width: 26px;
-      height: 26px;
-    }
-
+    .taskbar-icon img { width: 24px; height: 24px; object-fit: contain; }
+    .taskbar-icon[data-app="start"] img { width: 26px; height: 26px; }
     .taskbar-icon:hover { background: rgba(0,0,0,0.06); }
     .taskbar-icon:active { transform: scale(0.88); }
 
     .taskbar-icon.active-app::after {
       content: '';
       position: absolute;
-      bottom: 1px;
-      left: 50%;
+      bottom: 1px; left: 50%;
       transform: translateX(-50%);
-      width: 16px;
-      height: 3px;
+      width: 16px; height: 3px;
       background: var(--accent);
       border-radius: 2px;
     }
 
-    /* ================================================================
-       TASKBAR SEARCH BOX
-       ================================================================ */
     .taskbar-search {
-      display: flex;
-      align-items: center;
-      height: 34px;
-      width: 240px;
+      display: flex; align-items: center;
+      height: 34px; width: 240px;
       background: #ffffff;
       border: 1px solid rgba(0, 0, 0, 0.15);
       border-radius: 17px;
-      padding: 0 12px;
-      gap: 8px;
+      padding: 0 12px; gap: 8px;
       margin: 0 8px;
       cursor: text;
       transition: background 0.2s, border-color 0.2s;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    .taskbar-search:hover {
-      background: #f9f9f9;
-      border-color: rgba(0, 0, 0, 0.25);
-    }
-    
-    /* Force Search Icon to be Black */
-    .taskbar-search img {
-      width: 16px;
-      height: 16px;
-      filter: brightness(0);
-    }
-    
+    .taskbar-search:hover { background: #f9f9f9; border-color: rgba(0, 0, 0, 0.25); }
+    .taskbar-search img { width: 16px; height: 16px; filter: brightness(0); }
     .taskbar-search input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #000;
-      font-size: 13px;
-      width: 100%;
-      font-family: inherit;
+      background: transparent; border: none; outline: none;
+      color: #000; font-size: 13px; width: 100%; font-family: inherit;
+      cursor: text;
     }
-    .taskbar-search input::placeholder {
-      color: #666;
-    }
+    .taskbar-search input::placeholder { color: #666; }
 
-    /* ================================================================
-       SYSTEM TRAY
-       ================================================================ */
     .taskbar-tray {
-      position: absolute;
-      right: 12px;
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      color: #000;
-      font-size: 12px;
-      cursor: default;
+      position: absolute; right: 12px;
+      display: flex; align-items: center; gap: 2px;
+      color: #000; font-size: 12px;
       height: 100%;
     }
 
     .tray-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 32px;
-      padding: 0 6px;
+      display: flex; align-items: center; justify-content: center;
+      height: 32px; padding: 0 6px;
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.12s;
       position: relative;
       gap: 4px;
     }
-
     .tray-item:hover { background: var(--tray-hover); }
     .tray-item:active { background: rgba(0,0,0,0.12); }
+    .tray-item img { width: 16px; height: 16px; object-fit: contain; filter: brightness(0); }
 
-    /* Force ALL Tray Icons to be Black */
-    .tray-item img {
-      width: 16px;
-      height: 16px;
-      object-fit: contain;
-      filter: brightness(0);
-    }
-
-    /* Language Stacked Format */
     .lang-stacked {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      line-height: 1.1;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      color: #000;
+      display: flex; flex-direction: column; align-items: center;
+      line-height: 1.1; font-size: 10px; font-weight: 600;
+      letter-spacing: 0.5px; color: #000;
     }
     .lang-stacked span:first-child { opacity: 1; }
     .lang-stacked span:last-child { opacity: 0.6; }
 
-    /* Clock specific */
     .tray-clock {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0 12px;
-      cursor: pointer;
-      border-radius: 4px;
-      height: 36px;
-      color: #000;
+      display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+      padding: 0 12px; cursor: pointer; border-radius: 4px;
+      height: 36px; color: #000;
     }
     .tray-clock:hover { background: var(--tray-hover); }
     .tray-clock span {
-      font-size: 11px; 
-      font-weight: 400; 
-      font-style: normal; 
-      letter-spacing: 0.5px;
-      line-height: 1.2;
+      font-size: 11px; font-weight: 400; font-style: normal;
+      letter-spacing: 0.5px; line-height: 1.2;
     }
 
-    /* ================================================================
-       TRAY FLYOUT (Subitems) - Light Mode
-       ================================================================ */
+    /* Flyout */
     .tray-flyout {
       position: fixed;
       bottom: calc(var(--taskbar-h) + 8px);
@@ -404,41 +353,22 @@
       flex-direction: column;
       gap: 8px;
     }
-
-    .tray-flyout.open {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
+    .tray-flyout.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
     .flyout-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #000;
+      font-size: 12px; font-weight: 600; color: #000;
       padding-bottom: 6px;
       border-bottom: 1px solid rgba(0,0,0,0.1);
       margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    
     .flyout-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
-      font-size: 12px;
-      color: #333;
-      cursor: pointer;
-      border-radius: 4px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 0; font-size: 12px; color: #333;
+      cursor: pointer; border-radius: 4px;
     }
     .flyout-row:hover { color: #000; background: rgba(0,0,0,0.05); }
-    
-    .flyout-row.active {
-      color: var(--accent);
-      font-weight: 600;
-    }
+    .flyout-row.active { color: var(--accent); font-weight: 600; }
 
     .settings-toggle {
       width: 38px; height: 20px; border-radius: 10px; background: #ccc;
@@ -453,7 +383,7 @@
     .settings-toggle.on::after { transform: translateX(18px); }
 
     /* ================================================================
-       START MENU - Light Mode
+       START MENU
        ================================================================ */
     .start-menu {
       position: fixed;
@@ -475,22 +405,14 @@
       transition: opacity 0.2s ease, transform 0.2s ease;
       border: 1px solid rgba(0,0,0,0.1);
     }
-
-    .start-menu.open {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateX(-50%) translateY(0);
-    }
+    .start-menu.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
 
     .start-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
       padding: 20px 24px 10px;
-      font-weight: 600;
-      color: #000;
-      font-size: 14px;
+      font-weight: 600; color: #000; font-size: 14px;
     }
+    .all-apps-btn { cursor: pointer; }
 
     .start-apps {
       flex: 1;
@@ -501,31 +423,25 @@
       overflow-y: auto;
       align-content: start;
     }
-
     .start-app-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px 4px;
-      border-radius: 6px;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 4px; border-radius: 6px;
       cursor: pointer;
       transition: background 0.1s;
       color: #000;
       touch-action: manipulation;
     }
-
     .start-app-item:hover { background: rgba(0,0,0,0.05); }
     .start-app-item:active { background: rgba(0,0,0,0.1); transform: scale(0.93); }
     .start-app-item img { width: 30px; height: 30px; margin-bottom: 5px; object-fit: contain; }
     .start-app-item span { font-size: 11px; text-align: center; line-height: 1.2; }
 
     /* ================================================================
-       WINDOW - Light Mode
+       WINDOW
        ================================================================ */
     .window {
       position: fixed;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0.94);
       width: min(840px, 92vw);
       height: min(560px, 74vh);
@@ -541,19 +457,12 @@
       overflow: hidden;
       border: 1px solid rgba(0,0,0,0.15);
     }
-
-    .window.open {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translate(-50%, -50%) scale(1);
-    }
+    .window.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
 
     .window-header {
       height: 38px;
       background: #f3f3f3;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 0 0 0 14px;
       border-bottom: 1px solid #e0e0e0;
       cursor: grab;
@@ -562,31 +471,22 @@
     .window-header:active { cursor: grabbing; }
 
     .window-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #000;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #000;
     }
     .window-title img { width: 16px; height: 16px; object-fit: contain; }
 
     .window-controls { display: flex; height: 100%; }
     .win-btn {
-      width: 46px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: #000;
+      width: 46px; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #000;
       cursor: pointer;
       transition: background 0.1s;
       touch-action: manipulation;
     }
     .win-btn:hover { background: rgba(0,0,0,0.08); }
     .win-btn.close:hover { background: #e81123; color: #fff; }
-    
-    /* Maximize Icon specific */
     .win-btn img { width: 12px; height: 12px; filter: brightness(0); }
     .win-btn.close:hover img { filter: brightness(0) invert(1); }
 
@@ -602,40 +502,48 @@
     }
 
     /* ================================================================
-       APP-SPECIFIC STYLES
+       APP-SPECIFIC
        ================================================================ */
     .explorer-layout { display: flex; gap: 0; height: 100%; color: #333; }
     .explorer-nav {
-      width: 190px; flex-shrink: 0; border-right: 1px solid #e0e0e0;
-      padding-right: 10px; overflow-y: auto;
+      width: 190px; flex-shrink: 0;
+      border-right: 1px solid #e0e0e0;
+      padding-right: 10px;
+      overflow-y: auto;
     }
     .explorer-nav-item {
-      display: flex; align-items: center; gap: 8px; padding: 7px 10px;
-      border-radius: 5px; font-size: 12px; color: #555;
-      cursor: pointer; transition: background 0.1s;
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 5px;
+      font-size: 12px; color: #555;
+      cursor: pointer;
+      transition: background 0.1s;
     }
     .explorer-nav-item:hover { background: rgba(0,0,0,0.05); color: #000; }
     .explorer-nav-item.active { background: rgba(0, 103, 192, 0.1); color: var(--accent); }
     .explorer-nav-item i { width: 16px; text-align: center; font-size: 13px; }
     .explorer-content { flex: 1; padding-left: 16px; overflow-y: auto; }
     .explorer-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
       gap: 6px;
     }
     .explorer-folder {
       display: flex; flex-direction: column; align-items: center; gap: 7px;
-      padding: 14px 6px; border-radius: 6px; cursor: pointer;
-      transition: background 0.1s; text-align: center;
+      padding: 14px 6px; border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+      text-align: center;
     }
     .explorer-folder:hover { background: rgba(0,0,0,0.05); }
     .explorer-folder:active { background: rgba(0,0,0,0.1); transform: scale(0.95); }
     .explorer-folder img { width: 40px; height: 40px; object-fit: contain; }
     .explorer-folder span { font-size: 11px; color: #333; }
 
-    /* Drive Bar */
     .drive-container {
-      display: flex; align-items: flex-start; gap: 12px; padding: 10px;
-      border-radius: 6px; cursor: pointer; transition: background 0.1s;
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px; border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
       width: 240px;
     }
     .drive-container:hover { background: rgba(0,0,0,0.05); }
@@ -649,42 +557,55 @@
     .drive-subtext { font-size: 11px; color: #555; margin-top: 4px; }
 
     .terminal-body {
-      background: #0c0c0c; color: #cccccc; font-family: 'Cascadia Code', 'Consolas', monospace;
-      height: 100%; padding: 16px; border-radius: 6px; font-size: 13px; line-height: 1.5;
+      background: #0c0c0c; color: #cccccc;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      height: 100%; padding: 16px; border-radius: 6px;
+      font-size: 13px; line-height: 1.5;
       overflow-y: auto;
     }
     .terminal-line { white-space: pre-wrap; word-break: break-all; }
     .terminal-prompt { color: #4cc2ff; }
     .terminal-input-line { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
     .terminal-input-line input {
-      background: transparent; border: none; outline: none; color: #cccccc;
-      font-family: inherit; font-size: 13px; flex: 1; caret-color: #4cc2ff;
+      background: transparent; border: none; outline: none;
+      color: #cccccc; font-family: inherit; font-size: 13px;
+      flex: 1; caret-color: #4cc2ff; cursor: text;
     }
 
     .browser-bar {
-      display: flex; align-items: center; gap: 6px; padding: 8px 12px;
-      border-bottom: 1px solid #e0e0e0; flex-shrink: 0; background: #f9f9f9;
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+      background: #f9f9f9;
     }
     .browser-bar img { width: 16px; height: 16px; cursor: pointer; opacity: 0.65; }
     .browser-bar img:hover { opacity: 1; }
     .browser-url {
-      flex: 1; background: #fff; border: 1px solid #ccc; border-radius: 18px;
-      padding: 6px 14px; color: #000; font-size: 12px; outline: none;
+      flex: 1; background: #fff; border: 1px solid #ccc;
+      border-radius: 18px; padding: 6px 14px;
+      color: #000; font-size: 12px; outline: none;
+      cursor: text;
     }
-    
+
     .notepad-menubar {
-      display: flex; gap: 2px; padding: 5px 12px;
-      border-bottom: 1px solid #e0e0e0; flex-shrink: 0; background: #f9f9f9;
+      display: flex; gap: 2px;
+      padding: 5px 12px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+      background: #f9f9f9;
     }
     .notepad-menubar span {
-      font-size: 12px; padding: 3px 10px; border-radius: 4px;
-      cursor: pointer; color: #555;
+      font-size: 12px; padding: 3px 10px;
+      border-radius: 4px; cursor: pointer; color: #555;
     }
     .notepad-menubar span:hover { background: rgba(0,0,0,0.05); color: #000; }
     .notepad-textarea {
-      flex: 1; background: #fff; border: none; outline: none; resize: none;
-      padding: 14px; color: #000; font-family: 'Cascadia Code', 'Consolas', monospace;
+      flex: 1; background: #fff; border: none; outline: none;
+      resize: none; padding: 14px; color: #000;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
       font-size: 14px; line-height: 1.6;
+      cursor: text;
     }
 
     .settings-section { padding: 12px 16px; border-bottom: 1px solid #eee; color: #333; }
@@ -692,17 +613,22 @@
     .settings-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 7px 0; font-size: 12px; color: #555;
+      cursor: pointer;
     }
-    
+
     .calc-display {
-      background: #f0f0f0; border-radius: 6px; padding: 18px; text-align: right;
-      font-size: 34px; font-weight: 300; color: #000; margin-bottom: 10px; min-height: 66px;
+      background: #f0f0f0; border-radius: 6px;
+      padding: 18px; text-align: right;
+      font-size: 34px; font-weight: 300; color: #000;
+      margin-bottom: 10px; min-height: 66px;
     }
     .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
     .calc-btn {
-      padding: 15px 0; border-radius: 5px; border: none; background: #f9f9f9;
-      color: #000; font-size: 17px; cursor: pointer; font-family: inherit;
-      transition: background 0.1s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      padding: 15px 0; border-radius: 5px; border: none;
+      background: #f9f9f9; color: #000; font-size: 17px;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.1s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .calc-btn:hover { background: #e5e5e5; }
     .calc-btn:active { background: #d5d5d5; }
@@ -710,22 +636,26 @@
 
     .photos-grid { display: flex; gap: 10px; flex-wrap: wrap; }
     .photos-grid div {
-      width: 110px; height: 90px; border-radius: 6px; display: flex;
-      align-items: center; justify-content: center; color: #fff; font-size: 26px;
-      opacity: 0.85;
+      width: 110px; height: 90px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 26px; opacity: 0.85;
+      cursor: pointer;
     }
 
     .store-layout { display: flex; height: 100%; background: #fff; }
     .store-sidebar {
-      width: 60px; background: #f0f0f0; display: flex; flex-direction: column;
-      align-items: center; padding: 12px 0; gap: 20px;
+      width: 60px; background: #f0f0f0;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 0; gap: 20px;
     }
     .store-sidebar i { font-size: 18px; color: #555; cursor: pointer; }
     .store-sidebar i.active { color: var(--accent); }
     .store-content { flex: 1; padding: 24px; }
     .store-card {
-      border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px;
-      width: 140px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 16px; width: 140px; text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      cursor: pointer;
     }
     .store-card img { width: 48px; margin-bottom: 12px; }
     .store-card .title { font-size: 13px; font-weight: 600; color: #000; }
@@ -743,13 +673,11 @@
       .taskbar-search { width: 140px; margin: 0 4px; }
       .weather-widget { display: none; }
     }
-
     @media (max-width: 480px) {
       .start-apps { grid-template-columns: repeat(3, 1fr); }
       .explorer-nav { display: none; }
       .taskbar-search { display: none; }
     }
-
     @media (prefers-reduced-motion: reduce) {
       * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
     }
@@ -757,21 +685,27 @@
 </head>
 <body>
 
-<!-- ================================================================
-     LOADING SCREEN
-     ================================================================ -->
+<!-- Custom pointer -->
+<div id="custom-cursor">
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+    <path d="M4 2 L4 20 L9 15 L12 22 L15 21 L12 14 L19 14 Z"
+          fill="#ffffff" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<!-- Fullscreen hint -->
+<div id="fs-hint">Tap anywhere to enter fullscreen</div>
+
+<!-- Loading screen -->
 <div id="loading-screen">
   <img src="https://img.icons8.com/color/48/windows-11.png" alt="Windows Logo" class="loading-logo">
   <div class="spinner"></div>
 </div>
 
-<!-- ================================================================
-     DESKTOP
-     ================================================================ -->
+<!-- Desktop -->
 <div class="desktop" id="desktop">
   <div class="desktop-surface" id="desktopSurface">
-    
-    <!-- Desktop Icons -->
+
     <div class="desktop-icons-container">
       <div class="desktop-icon" data-app="recyclebin">
         <img src="https://img.icons8.com/color/48/recycle-bin.png" alt="Recycle Bin">
@@ -785,7 +719,6 @@
 
     <div id="selection-box"></div>
 
-    <!-- Right-Click Context Menu -->
     <div class="context-menu" id="contextMenu">
       <div class="context-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refresh</div>
       <div class="context-item" onclick="openApp('settings'); closeContextMenu()"><i class="fas fa-palette"></i> Personalization</div>
@@ -793,10 +726,7 @@
     </div>
   </div>
 
-  <!-- Taskbar -->
   <div class="taskbar" id="taskbar">
-    
-    <!-- Weather Widget -->
     <div class="weather-widget">
       <img src="https://img.icons8.com/color/48/sun.png" alt="Weather">
       <div class="weather-info">
@@ -805,10 +735,8 @@
       </div>
     </div>
 
-    <!-- Center Icons -->
     <div class="taskbar-center" id="taskbarCenter"></div>
-    
-    <!-- Right Tray -->
+
     <div class="taskbar-tray">
       <div class="tray-item" data-tray="update" title="Hidden Icons">
         <img width="26" height="26" src="https://img.icons8.com/metro/26/chevron-up.png" alt="chevron-up"/>
@@ -819,14 +747,12 @@
       <div class="tray-item" data-tray="onedrive" title="OneDrive">
         <img width="48" height="48" src="https://img.icons8.com/deco/48/skydrive.png" alt="skydrive"/>
       </div>
-      
       <div class="tray-item" data-tray="lang" title="Language">
         <div class="lang-stacked">
           <span>ENG</span>
           <span>IN</span>
         </div>
       </div>
-      
       <div class="tray-item" data-tray="wifi" title="Wi-Fi">
         <img width="26" height="26" src="https://img.icons8.com/metro/26/wifi.png" alt="wifi"/>
       </div>
@@ -836,7 +762,6 @@
       <div class="tray-item" data-tray="battery" title="Battery">
         <img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/full-battery.png" alt="full-battery"/>
       </div>
-
       <div class="tray-clock" data-tray="clock" title="Date and Time">
         <span id="trayTime">--:--</span>
         <span id="trayDate">--/--/----</span>
@@ -845,9 +770,7 @@
   </div>
 </div>
 
-<!-- ================================================================
-     TRAY FLYOUT
-     ================================================================ -->
+<!-- Tray flyout -->
 <div class="tray-flyout" id="trayFlyout">
   <div class="flyout-title">
     <span id="flyoutTitle">Settings</span>
@@ -856,9 +779,7 @@
   <div id="flyoutContent" style="display:flex; flex-direction:column; gap:4px;"></div>
 </div>
 
-<!-- ================================================================
-     START MENU
-     ================================================================ -->
+<!-- Start menu -->
 <div class="start-menu" id="startMenu">
   <div class="start-header">
     <span>📌 Pinned</span>
@@ -867,9 +788,7 @@
   <div class="start-apps" id="startApps"></div>
 </div>
 
-<!-- ================================================================
-     WINDOW
-     ================================================================ -->
+<!-- Window -->
 <div class="window" id="appWindow">
   <div class="window-header" id="windowHeader">
     <div class="window-title">
@@ -887,7 +806,107 @@
 
 <script>
 /* ================================================================
-   INDEXEDDB SETUP
+   FULLSCREEN CONTROLLER
+   ================================================================ */
+function isFullscreen() {
+  return !!(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.msFullscreenElement);
+}
+
+function hideFsHint() {
+  const h = document.getElementById('fs-hint');
+  if (h) h.classList.add('hide');
+}
+
+function requestFullscreen() {
+  if (isFullscreen()) return;
+  const el = document.documentElement;
+  const fn = el.requestFullscreen ||
+             el.webkitRequestFullscreen ||
+             el.msRequestFullscreen;
+  if (!fn) { hideFsHint(); return; }
+  try {
+    const p = fn.call(el, { navigationUI: 'hide' });
+    if (p && typeof p.then === 'function') {
+      p.then(hideFsHint).catch(() => {});
+    } else {
+      hideFsHint();
+    }
+  } catch (e) {}
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+}
+
+function exitFullscreen() {
+  const fn = document.exitFullscreen ||
+             document.webkitExitFullscreen ||
+             document.msExitFullscreen;
+  if (fn && isFullscreen()) {
+    try {
+      const p = fn.call(document);
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) {}
+  }
+}
+
+function toggleFullscreen() {
+  isFullscreen() ? exitFullscreen() : requestFullscreen();
+}
+
+/* First user gesture enters fullscreen */
+['pointerdown', 'touchstart', 'keydown'].forEach(evt => {
+  window.addEventListener(evt, () => {
+    requestFullscreen();
+    hideFsHint();
+  }, { once: true, passive: true });
+});
+
+/* Try on load (works in some kiosk / installed-PWA contexts) */
+window.addEventListener('load', () => {
+  requestFullscreen();
+});
+
+document.addEventListener('fullscreenchange', () => {
+  if (isFullscreen()) hideFsHint();
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  if (isFullscreen()) hideFsHint();
+});
+
+/* Manual toggle: Ctrl+Shift+F */
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') {
+    e.preventDefault();
+    toggleFullscreen();
+  }
+});
+
+/* ================================================================
+   CUSTOM POINTER (desktop only)
+   ================================================================ */
+(function initCursor() {
+  const cursor = document.getElementById('custom-cursor');
+  if (!cursor) return;
+  const fine = window.matchMedia('(pointer: fine)').matches;
+  if (!fine) { cursor.style.display = 'none'; return; }
+
+  function move(x, y) {
+    cursor.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+  }
+
+  document.addEventListener('mousemove', (e) => move(e.clientX, e.clientY), { passive: true });
+  document.addEventListener('mousedown', () => cursor.classList.add('pressed'), { passive: true });
+  document.addEventListener('mouseup',   () => cursor.classList.remove('pressed'), { passive: true });
+
+  /* Hide pointer when it leaves the window */
+  document.addEventListener('mouseleave', () => { cursor.style.opacity = '0'; });
+  document.addEventListener('mouseenter', () => { cursor.style.opacity = '1'; });
+})();
+
+/* ================================================================
+   INDEXEDDB
    ================================================================ */
 let db;
 const dbRequest = indexedDB.open("index.db", 1);
@@ -918,7 +937,6 @@ function loadState() {
   const tx = db.transaction('state', 'readonly');
   const store = tx.objectStore('state');
   const req = store.get('windowState');
-  
   req.onsuccess = () => {
     const state = req.result;
     if (state && state.winOpen && state.currentApp) {
@@ -931,13 +949,13 @@ function loadState() {
           win.style.left = state.winLeft;
           win.style.top = state.winTop;
         }
-      }, 1900); 
+      }, 1900);
     }
   };
 }
 
 /* ================================================================
-   ASSETS & ICONS
+   ASSETS
    ================================================================ */
 const IMG = 'https://raw.githubusercontent.com/notAperson535/Win11-HTML/c4289ccd494bea102381b6f0765c0d4fd802c9c3/img';
 
@@ -987,7 +1005,7 @@ const START_KEYS = [
 ];
 
 /* ================================================================
-   RENDER UI
+   UI BUILD
    ================================================================ */
 function buildUI() {
   let taskbarHTML = '';
@@ -996,7 +1014,6 @@ function buildUI() {
       <div class="taskbar-icon" data-app="${item.key}" title="${item.label}">
         <img src="${item.img}" alt="${item.label}" draggable="false">
       </div>`;
-    
     if (item.key === 'start') {
       taskbarHTML += `
         <div class="taskbar-search" onclick="document.getElementById('searchInput').focus()">
@@ -1020,7 +1037,7 @@ function buildUI() {
 }
 
 /* ================================================================
-   SEARCH LOGIC
+   SEARCH
    ================================================================ */
 function handleSearch(e) {
   if (e.key === 'Enter') {
@@ -1037,7 +1054,7 @@ function handleSearch(e) {
 }
 
 /* ================================================================
-   WINDOW MANAGER (Minimize/Restore Logic)
+   WINDOW MANAGER
    ================================================================ */
 const winEl = document.getElementById('appWindow');
 const winTitle = document.getElementById('winTitle');
@@ -1049,7 +1066,6 @@ function openApp(key) {
   const icon = ICONS[key];
   if (!icon) return;
 
-  // If the same app is minimized, just restore it
   if (currentApp === key && !winEl.classList.contains('open')) {
     winEl.classList.add('open');
     document.querySelectorAll('.taskbar-icon').forEach(el => {
@@ -1059,7 +1075,6 @@ function openApp(key) {
     return;
   }
 
-  // Otherwise load new app
   winTitle.textContent = icon.label;
   winIcon.src = icon.img;
 
@@ -1142,10 +1157,10 @@ function openApp(key) {
           <div class="settings-row"><span>Display</span><i class="fas fa-chevron-right"></i></div>
           <div class="settings-row"><span>Sound</span><i class="fas fa-chevron-right"></i></div>
           <div class="settings-row"><span>Notifications</span><i class="fas fa-chevron-right"></i></div>
-          <div class="settings-row"><span>Power & battery</span><i class="fas fa-chevron-right"></i></div>
+          <div class="settings-row"><span>Power &amp; battery</span><i class="fas fa-chevron-right"></i></div>
         </div>
         <div class="settings-section">
-          <h4>Bluetooth & devices</h4>
+          <h4>Bluetooth &amp; devices</h4>
           <div class="settings-row"><span>Bluetooth</span><div class="settings-toggle on" onclick="this.classList.toggle('on')"></div></div>
           <div class="settings-row"><span>Wi-Fi</span><div class="settings-toggle on" onclick="this.classList.toggle('on')"></div></div>
           <div class="settings-row"><span>Airplane mode</span><div class="settings-toggle" onclick="this.classList.toggle('on')"></div></div>
@@ -1230,7 +1245,7 @@ function closeApp() {
 }
 
 /* ================================================================
-   TERMINAL LOGIC
+   TERMINAL
    ================================================================ */
 function initTerminal() {
   const input = document.getElementById('terminalInput');
@@ -1270,7 +1285,7 @@ function initTerminal() {
 }
 
 /* ================================================================
-   SYSTEM TRAY FLYOUT
+   TRAY FLYOUT
    ================================================================ */
 const trayFlyout = document.getElementById('trayFlyout');
 const flyoutTitle = document.getElementById('flyoutTitle');
@@ -1284,15 +1299,15 @@ document.querySelectorAll('.tray-item, .tray-clock').forEach(item => {
   item.addEventListener('click', (e) => {
     e.stopPropagation();
     const type = item.dataset.tray;
-    
+
     if (trayFlyout.classList.contains('open') && trayFlyout.dataset.active === type) {
       closeFlyout();
       return;
     }
-    
+
     trayFlyout.dataset.active = type;
     flyoutContent.innerHTML = '';
-    
+
     if (type === 'update') {
       flyoutTitle.textContent = 'Hidden Icons';
       flyoutContent.innerHTML = `<div class="flyout-row"><span>No hidden icons</span></div>`;
@@ -1353,7 +1368,7 @@ document.querySelectorAll('.tray-item, .tray-clock').forEach(item => {
         <div class="flyout-row" style="margin-top:6px; font-size:11px; color:var(--accent);">Open Calendar</div>
       `;
     }
-    
+
     trayFlyout.classList.add('open');
   });
 });
@@ -1365,7 +1380,7 @@ document.addEventListener('click', (e) => {
 });
 
 /* ================================================================
-   CONTEXT MENU & DRAG SELECTION
+   CONTEXT MENU / DESKTOP
    ================================================================ */
 const desktopSurface = document.getElementById('desktopSurface');
 const selectionBox = document.getElementById('selection-box');
@@ -1387,7 +1402,7 @@ document.addEventListener('click', (e) => {
 
 document.querySelectorAll('.desktop-icon').forEach(icon => {
   icon.addEventListener('dblclick', () => openApp(icon.dataset.app));
-  icon.addEventListener('click', (e) => {
+  icon.addEventListener('click', () => {
     document.querySelectorAll('.desktop-icon').forEach(i => i.style.background = 'transparent');
     icon.style.background = 'rgba(0,0,0,0.1)';
   });
@@ -1475,7 +1490,7 @@ desktopSurface.addEventListener('click', (e) => {
 });
 
 /* ================================================================
-   TASKBAR & START MENU EVENTS
+   TASKBAR / START MENU
    ================================================================ */
 document.getElementById('taskbarCenter').addEventListener('click', e => {
   const icon = e.target.closest('.taskbar-icon');
@@ -1558,7 +1573,7 @@ document.getElementById('winMaximize').addEventListener('click', () => {
 })();
 
 /* ================================================================
-   CLOCK (Format: DD-MM-YYYY, 24H, Same Font)
+   CLOCK
    ================================================================ */
 function updateClock() {
   const now = new Date();
@@ -1567,34 +1582,40 @@ function updateClock() {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = now.getFullYear();
   const date = `${day}-${month}-${year}`;
-  
   document.getElementById('trayTime').textContent = time;
   document.getElementById('trayDate').textContent = date;
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-// Boot sequence & Audio
+/* ================================================================
+   BOOT
+   ================================================================ */
 window.addEventListener('load', () => {
   buildUI();
   setTimeout(() => {
     document.getElementById('loading-screen').classList.add('hidden');
     const startupSound = new Audio('https://files.catbox.moe/a6tds4.mp3');
-    startupSound.play().catch(e => console.log('Audio playback blocked by browser policy:', e));
+    startupSound.play().catch(e => console.log('Audio playback blocked:', e));
+
+    if (!isFullscreen()) {
+      const hint = document.getElementById('fs-hint');
+      if (hint) {
+        hint.style.display = 'block';
+        setTimeout(hideFsHint, 7000);
+      }
+    }
   }, 1800);
 });
 
-// Prevent context menu on long press globally (except custom context menu)
 document.addEventListener('contextmenu', e => {
   if (!e.target.closest('#desktopSurface')) e.preventDefault();
 });
 
-// Prevent image drag
 document.querySelectorAll('img').forEach(img => {
   img.addEventListener('dragstart', e => e.preventDefault());
 });
 
-// Escape closes window / menu
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (winEl.classList.contains('open')) minimizeApp();
